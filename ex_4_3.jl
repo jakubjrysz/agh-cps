@@ -4,7 +4,7 @@ using LinearAlgebra
 
 
 function energy(x)
-    return sum(x.^2)
+    return sum(x.^2)/length(x)
 end
 
 

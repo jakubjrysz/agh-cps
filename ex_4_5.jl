@@ -11,7 +11,5 @@ end
 
 x = -10*pi:0.001:10*pi
 
-y = sin.(x)
-lines(sin.(x))
-println(sin.(x))
+rms(sin.(x))
 
