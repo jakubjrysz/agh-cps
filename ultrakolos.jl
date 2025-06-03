@@ -112,13 +112,13 @@ function quantization_error(a, b, N, x)
 end
 
 function dft_freq(N, fs)
-    f = [fs/N * k for k in 0:N-1]
-    return f
+    k = collect(-div(N, 2) : div(N-1, 2))
+    return fs * k / N
 end
 
 function dft_freq_to_index(freq, fs, N)
-    k = mod(freq * N / fs, N)
-    return round(Int,k)
+    k = round(Int, freq * N / fs)
+    return mod(k, N) + 1
 end
 
 
@@ -129,28 +129,35 @@ hann_window(M) = [0.5 - 0.5*cos(2*π*n/(2*M+1)) for n in -M:M]
 hamm_window(M) = [0.54 - 0.46*cos(2*π*n/(2*M+1)) for n in -M:M]
 blackman_window(M) = [0.42 + 0.5*cos(2*π*n/(2*M+1)) + 0.08*cos(4*π*n/(2*M+1)) for n in -M:M]
 
+
 function fir_lp(fp, f0, order)
     fn = f0/fp
-    h = [2*fn * sinc(2*π*fn*n) for n in -order/2:order/2]
+    M = div(order, 2)
+    h = [2*fn * sinc(2*π*fn*n) for n in -M:M]
     return h
 end
 
 function fir_hp(fp, f0, order)
     fn = f0/fp
-    h = [kronecker(n) - 2*fn * sinc(2*π*fn*n) for n in -order/2:order/2]
+    M = div(order, 2)
+    h = [kronecker(n) - 2*fn * sinc(2*π*fn*n) for n in -M:M]
     return h
 end
 
 function fir_bp(fp,f1,f2,order)
     fn1 = f1/fp
     fn2 = f2/fp
-    h = [2*fn2*sinc(2*π*fn2*n) - 2*fn1*sinc(2*π*fn1*n) for n in -order/2:order/2] 
+    M = div(order, 2)
+    h = [2*fn2*sinc(2*fn2*n) - 2*fn1*sinc(2*fn1*n) for n in -M:M]
+    return h
 end
 
 function fir_bs(fp,f1,f2,order)
     fn1 = f1/fp
     fn2 = f2/fp
-    h = [kronecker(n) - (2*fn2*sinc(2*π*fn2*n) - 2*fn1*sinc(2*π*fn1*n)) for n in -order/2:order/2] 
+    M = div(order, 2)
+    h = [kronecker(n) - (2*fn2*sinc(2*π*fn2*n) - 2*fn1*sinc(2*π*fn1*n)) for n in -M:M]
+    return h
 end
 #=
 ZAD1.
@@ -161,22 +168,23 @@ ograniczonym paśmie, z szybkością fp = 858 próbek na sekunde.
 Fouriera tego sygnału dla następujących częstotliwość f = [-242, 44, 396, 418]. Jako rozwiązanie podaj sumę faz tych
 składowych częstotliwościowych.
 
-NIE DZIAŁA
+DZIAŁA
 =#
 
 function zad1(;
-    fp::Int = 858,
-    x::Vector{ComplexF64} = ComplexF64[-0.25 - 0.81im, -0.26 + 0.99im, -0.24 - 1.46im, 0.6 - 0.21im, -0.56 - 0.43im, -1.07 + 0.51im, -0.21 + 0.67im, -0.16 + 0.25im, -0.36 - 0.44im, -0.64 + 1.78im, 0.03 - 0.72im, -0.57 + 0.09im, -0.37 - 0.59im, -0.65 - 0.54im, 0.33 + 0.32im, -0.37 - 0.71im, 0.89 + 1.24im, -0.26 + 1.4im, -0.03 - 0.32im, -0.62 - 0.02im, 1.49 + 0.35im, -0.03 - 0.29im, 0.46 + 0.46im, -0.92 - 0.24im, -0.54 + 0.84im, 0.83 + 0.89im, 0.01 - 0.69im, 0.32 + 0.71im, -1.19 + 0.47im, 0.26 - 0.95im, 1.29 + 0.47im, 0.7 + 0.05im, 0.04 - 0.73im, -0.97 + 0.59im, 0.09 - 1.07im, -0.23 - 0.71im, -0.83 + 0.44im, 1.17 + 0.91im, 0.61 + 1.64im],
-    f::Vector{Int} = [-242, 44, 396, 418],
+    fp::Int = 693,
+    x::Vector{ComplexF64} = ComplexF64[-0.65 + 0.13im, -1.02 + 0.82im, -0.9 + 0.88im, -1.49 + 0.52im, 0.68 + 0.37im, -0.16 - 0.52im, 0.37 + 1.18im, 0.0 - 0.77im, 0.31 + 0.09im, -0.25 - 0.38im, -0.6 - 0.21im, -0.66 - 0.23im, -0.25 - 0.1im, 0.56 + 0.25im, -0.07 + 0.04im, -1.35 - 0.18im, 0.02 - 0.8im, 0.56 + 0.22im, 0.82 + 1.47im, 0.63 + 1.05im, -0.61 + 0.47im, -0.8 - 0.17im, -0.5 - 0.87im, 0.88 + 0.2im, -0.35 + 0.09im, -0.79 + 0.02im, 0.48 + 0.51im, 0.17 - 0.48im, 0.2 - 1.1im, 0.26 - 0.9im, 0.19 + 1.27im, -0.0 + 0.78im, -1.2 - 0.36im],
+    f::Vector{Int} = [-189, -168, -42, 105, 252, 273],
 )
     X = myDFT(x)
-    n_vect = [round(Int,dft_freqton(length(x), freq_i, fp)) for freq_i in f]
-    angle_vect = [angle(X[i]) for i in n_vect]
-    result = sum(angle_vect)
-    return result, angle_vect
+    N = length(x)
+    k = [dft_freq_to_index(f[i], fp, N) for i in eachindex(f)]
+    phase = 0
+    for i in k
+        phase += angle(X[i])
+    end
+    return phase
 end
-
-
 #=
 ZAD2.
 
@@ -254,4 +262,33 @@ function zad4(;
     return energy(error)
 end
 
-zad4()
+#=
+
+ZAD5.
+
+Oblicz odpowiedź impulsową hЄ R7 nierekursywnego filtru pasmowoprzepustowego rzędu 76 
+o liniowej charakterystyce fazowej. Filtr zaprojektuj tak aby przy częstotliwości próbkowania fp = 197.0 Hz, 
+3 dB pasmo przepustowe było między częstotliwościami f1 = 3.94 i f2 = 51.22 Hz. Do zaprojektowania filtru wykorzystaj metodę okien czasowych i okno Hanninga. 
+Jako rozwiązanie podaj sumę wartości wektora ho indeksach z = [27, 21, 20, 10].
+
+=#
+
+function zad5(;
+    order::Int = 76,
+    fp::Float64 = 197.0,
+    f1::Float64 = 3.94,
+    f2::Float64 = 51.22,
+    z::Vector{Int} = [27, 21, 20, 10],
+)
+    M = div(order, 2)
+    h = fir_bp(fp, f1, f2, order)
+    w = hann_window(M)
+    hw = h .* w
+    sum = 0
+    for i in z
+        sum += hw[i]
+    end
+    return sum
+end
+
+zad5()

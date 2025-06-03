@@ -1,41 +1,29 @@
-#= Zadanie 2:
-#* correct solution
-Z ciągłego sygnału f(t) ∈ R o paśmie ograniczonym od dołu i od góry przez częstotliwość |B| < 1/2Δm,
-zostało pobrane 69 próbek w równych odstępach czasu Δm = m_{n+1} - m_n. wartości sygnału oraz momenty
-w których zostały pobrane kolejne próbki, znajdują się odpowiednio w wektorze s ∈ R^69 oraz w wektorze
-m ∈ R^69, gdzie s_n = f(m_n). Na podstawie wektorów m oraz s, znajdź sygnał g(t), będący rekonstrukcją
-sygnału f(t) otrzymaną z wykorzystaniem wzoru interpolacyjnego Whittakera-Shannona. Jako rozwiazanie
-podaj sumę wartości sygnału g(t) dla momentów t ∈ R^4, to znaczy ∑ n=1 -> 4 g(t_n)
-=#
+function zad5(;
+    order::Int = 77,
+    fp::Float64 = 197.0,
+    f1::Float64 = 3.94,
+    f2::Float64 = 51.22,
+    z::Vector{Int} = [27, 21, 20, 10],
+)
+    M = div(order, 2)  # środek filtru
+    h = fir_bp(fp, f1, f2, order)
+    w = hann_window(M)
+    hw = h .* w
 
-using LinearAlgebra
-
-
-function rozwiazanie_2(;
-        m::Vector{Float64}=[2.0, 2.0089, 2.0178, 2.0267, 2.0356, 2.0445, 2.0534, 2.0623, 2.0712, 2.0801, 2.089, 2.0979, 2.1068, 2.1157, 2.1246, 2.1335, 2.1424, 2.1513, 2.1602, 2.1691, 2.178, 2.1869, 2.1958, 2.2047, 2.2136, 2.2225, 2.2314, 2.2403, 2.2492, 2.2581, 2.267, 2.2759, 2.2848, 2.2937, 2.3026, 2.3115, 2.3204, 2.3293, 2.3382, 2.3471, 2.356, 2.3649, 2.3738, 2.3827, 2.3916, 2.4005, 2.4094, 2.4183, 2.4272, 2.4361, 2.445, 2.4539, 2.4628, 2.4717, 2.4806, 2.4895, 2.4984, 2.5073, 2.5162, 2.5251, 2.534, 2.5429, 2.5518, 2.5607, 2.5696, 2.5785, 2.5874, 2.5963, 2.6052],
-        s::Vector{Float64}=[0.2096, 0.078, 0.5424, 0.1371, 0.8907, 0.8571, 0.9054, 0.8251, 0.8257, 0.0806, 0.0627, 0.4738, 0.3664, 0.3949, 0.2519, 0.8641, 0.0585, 0.2472, 0.7465, 0.6552, 0.4091, 0.0134, 0.3141, 0.1118, 0.1763, 0.9125, 0.2146, 0.0039, 0.0613, 0.1577, 0.7172, 0.8305, 0.3476, 0.1374, 0.9451, 0.6567, 0.17, 0.8519, 0.0879, 0.0532, 0.5134, 0.099, 0.9124, 0.6079, 0.8783, 0.8155, 0.4724, 0.2542, 0.1515, 0.4467, 0.6567, 0.8456, 0.8264, 0.6765, 0.1342, 0.5729, 0.193, 0.5653, 0.3538, 0.5603, 0.0119, 0.7747, 0.8549, 0.4851, 0.3145, 0.4572, 0.952, 0.0376, 0.4361],
-        t::Vector{Float64}=[2.00445, 2.50107, 2.16732, 2.46547],
-    )
-    #=
-    
-    Δt = m[2] - m[1]
-    x = zeros(4)
-    for i in eachindex(x)
-        for j in eachindex(m)
-            x[i] += s[j] * sinc((t[i] - m[j]) / Δt)
-        end
-    end
-    return sum(x)=#
+    # Zmieniamy indeksy z [-M:M] na [1:order] (Julia indeksuje od 1)
+    sum_hw = sum(hw[i] for i in z)
+    return sum_hw
 end
 
-function interpolate(s::Vector, m::Vector, t::Vector)
-    delta_t = m[2] - m[1]
-    x = [sum(s[j] * sinc((ti - m[j]) / delta_t) for j in eachindex(m)) for ti in t ]
-    return x
+# Okno Hanninga o symetrii względem zera: n ∈ -M:M
+hann_window(M) = [0.5 - 0.5*cos(2π * n / (2M + 1)) for n in -M:M]
+
+# Filtr pasmowoprzepustowy: odejmujemy dwa filtry dolnoprzepustowe
+function fir_bp(fp, f1, f2, order)
+    fn1 = f1 / fp
+    fn2 = f2 / fp
+    M = div(order, 2)
+    return [2fn2 * sinc(2fn2 * n) - 2fn1 * sinc(2fn1 * n) for n in -M:M]
 end
 
-m = [2.6, 2.6019, 2.6038, 2.6057, 2.6076, 2.6095, 2.6114, 2.6133, 2.6152, 2.6171, 2.619, 2.6209, 2.6228, 2.6247, 2.6266, 2.6285, 2.6304, 2.6323, 2.6342, 2.6361, 2.638, 2.6399, 2.6418, 2.6437, 2.6456, 2.6475, 2.6494, 2.6513, 2.6532, 2.6551, 2.657, 2.6589, 2.6608, 2.6627, 2.6646, 2.6665, 2.6684, 2.6703, 2.6722, 2.6741, 2.676, 2.6779, 2.6798, 2.6817, 2.6836, 2.6855, 2.6874, 2.6893, 2.6912, 2.6931, 2.695, 2.6969, 2.6988, 2.7007, 2.7026, 2.7045, 2.7064, 2.7083]
-s = [0.4385, 0.5899, 0.7868, 0.2957, 0.9193, 0.8803, 0.4138, 0.5905, 0.6732, 0.9318, 0.4337, 0.9363, 0.2334, 0.144, 0.4306, 0.1259, 0.4645, 0.4254, 0.7039, 0.744, 0.359, 0.2312, 0.7368, 0.0634, 0.7314, 0.8241, 0.5637, 0.8077, 0.3066, 0.2126, 0.403, 0.8975, 0.9436, 0.8806, 0.6704, 0.1699, 0.036, 0.2996, 0.6026, 0.6852, 0.5137, 0.7892, 0.682, 0.0232, 0.2076, 0.3536, 0.5995, 0.2167, 0.2819, 0.8037, 0.4495, 0.7797, 0.1536, 0.3781, 0.7291, 0.6212, 0.8944, 0.4551]
-t = [2.66631, 2.70013, 2.61596, 2.6247, 2.68094, 2.63363, 2.68892, 2.63933, 2.62679, 2.68037, 2.60247]
-
-sum(interpolate(s,m,t))
+zad5()
