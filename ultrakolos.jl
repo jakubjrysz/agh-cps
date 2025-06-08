@@ -76,21 +76,16 @@ function lti_phase(b::Vector, a::Vector, F::Vector)
     return phase
 end
 
-function conv(signal,kernel)
-    m = length(signal)
-    n = length(kernel)
-    reversedKernel = reverse(kernel)
-    outputLength = m + n - 1
-    result = zeros(outputLength)
-
-    for i in 1:outputLength
-        for j in 1:n
-            if i - j + 1 ≥ 1 && i - j + 1 ≤ m
-                result[i] += signal[i - j + 1] * reversedKernel[j]  
-            end
+function convolution(x, h)
+    n = length(x)
+    m = length(h)
+    y = zeros(n + m - 1)
+    for i in 1:n
+        for j in 1:m
+            y[i + j - 1] += x[i] * h[j]
         end
     end
-    return result
+    return y
 end
 
 function interpolate(s::Vector, m::Vector, t::Vector)
