@@ -284,3 +284,66 @@ function rozwiazanie15(;
     return sum(out)
 end
 #działa
+
+function rozwiazanie16(;
+    fp::Int = 940,
+    x::Vector{ComplexF64} = ComplexF64[-0.65 - 0.67im, -0.29 - 1.34im, -1.28 + 0.2im, -0.44 + 0.15im, 1.0 + 0.05im, -0.66 - 0.1im, 0.08 + 0.24im, -1.17 + 0.43im, 0.05 + 0.85im, -0.5 - 0.46im, -0.24 + 0.16im, 0.76 - 0.29im, 0.35 + 0.09im, -1.85 + 1.1im, -0.51 - 0.12im, -0.29 + 1.02im, -0.31 + 1.76im, -0.55 - 0.15im, 0.1 - 0.7im, -0.0 + 0.52im, 1.2 - 1.01im, 0.45 + 0.71im, 1.73 + 0.9im, -0.54 + 1.56im, -0.22 + 0.4im, -0.16 - 0.44im, -0.78 + 0.24im, 0.52 + 1.06im, -0.8 - 0.85im, -0.2 - 1.5im, 0.81 - 0.95im, 0.91 + 0.35im, -0.18 - 0.57im, -0.66 + 0.81im, 1.14 + 0.02im, -0.65 + 1.58im, 0.06 - 0.47im, -0.46 + 0.35im, -0.48 - 0.18im, 0.5 - 0.68im, 0.02 - 1.54im, -1.47 - 1.26im, -0.37 - 1.14im, 0.08 - 0.32im, -1.19 - 1.9im, -0.04 - 0.37im, -1.39 - 1.23im],
+    f::Vector{Int} = [-380, -360, -260, -60, -20, 180, 360],
+)
+    #w jądrze k/N = fn
+    f_len = length(f)
+    N = length(x)
+    fn = [f[i]/fp for i in 1:f_len]
+
+    X_f = 1/N .* [sum(x[n + 1] * exp(-im * 2 * pi * n * fi) for n in 0:N-1) for fi in fn]
+
+    return sum(abs.(X_f))
+end
+
+function rozwiazanie17(;
+    x::Vector{Float64} = [3.95, -3.92, 0.72, 2.89, -4.49, 4.25, -2.76, 2.85, 2.62, 1.96, -1.96, -2.94, 4.22, 3.53, 1.58, 4.46, -2.89, 3.41, 2.82, 0.46, -3.47, 4.93, 3.99, 3.49, -2.89, 2.29, 4.35, 4.84, -3.91, -4.37, -1.2, -1.27, 2.38, 3.48, 2.72, 2.37, 2.19, -3.66, -4.74, -3.1, -2.14, -4.18, 1.63, -4.46, -1.81, -2.09, 3.93, -3.82, 4.81, -3.06, 3.29, -1.63, 3.77, -4.55, -4.16, -0.5, 3.91, -2.53, 2.03, -2.88, 3.77, -3.25],
+    h::Vector{Float64} = [1.46, -4.11, 0.82, -2.47, 0.76, 0.86, 2.3, 3.16, -0.75, -2.04],
+)
+    x_len = length(x)
+    h_len = length(h)
+    y_len = x_len + h_len - 1
+    y = zeros(y_len)
+
+    for i in 1:x_len
+        for j in 1:h_len
+            y[i + j - 1] += x[i] * h[j]
+        end
+    end
+    power = sum(y.^2)/y_len
+    return power
+end
+#działa
+
+function rozwiazanie18(;
+    zz::Vector{ComplexF64} = ComplexF64[1.0 + 0.0im, 1.0 + 0.0im, 1.0 + 0.0im, 1.0 + 0.0im, 1.0 + 0.0im, 1.0 + 0.0im, -1.0 + 0.0im, -1.0 + 0.0im, -1.0 + 0.0im, -1.0 + 0.0im, -1.0 + 0.0im, -1.0 + 0.0im],
+    pp::Vector{ComplexF64} = ComplexF64[0.543701277994591 - 0.8319925555042785im, 0.29457887606763117 + 0.9483370303390719im, 0.543701277994591 + 0.8319925555042785im, 0.29457887606763117 - 0.9483370303390719im, 0.508848478970115 - 0.8409843938995955im, 0.3274254690915373 + 0.9249844307416222im, 0.508848478970115 + 0.8409843938995955im, 0.3274254690915373 - 0.9249844307416222im, 0.45219457592657175 - 0.864724019694428im, 0.3858890222126597 + 0.8953357230268396im, 0.45219457592657175 + 0.864724019694428im, 0.3858890222126597 - 0.8953357230268396im],
+    k::Float64 = 2.9839279959995376e-7,
+    F::Vector{Float64} = [0.13, 0.22, 0.43, 0.48],
+)
+    z_len = length(zz)
+    p_len = length(pp)
+    f_len = length(F)
+
+    liczniki = ones(ComplexF64, f_len)
+    mianowniki = ones(ComplexF64, f_len)
+    y = zeros(ComplexF64, f_len)
+
+    for i in 1:f_len
+        z = exp(im * 2 * π * F[i])
+        for j in 1:z_len
+            liczniki[i] *= (1 - zz[j] * z^(-1))
+        end
+        for j in 1:p_len
+            mianowniki[i] *= (1 - pp[j] * z^(-1))
+        end
+        y[i] = liczniki[i]/mianowniki[i]
+    end
+    return sum(angle.(y))/f_len
+end
+#działa
+rozwiazanie18()
