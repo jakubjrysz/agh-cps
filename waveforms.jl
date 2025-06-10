@@ -2,12 +2,11 @@ using CairoMakie
 using LinearAlgebra
 
 
-ramp_wave(t::Real)::Real = 2 * (t % 1)
+    ramp_wave(t::Real)::Real = 2 * rem(t, 1, RoundNearest)
+    sawtooth_wave(t::Real)::Real = -2 * rem(t, 1, RoundNearest)
+    triangular_wave(t::Real)::Real = ifelse(mod(t + 1 / 4, 1.0) < 1 / 2, 4mod(t + 1 / 4, 1.0) - 1, -4mod(t + 1 / 4, 1.0) + 3)
+    square_wave(t::Real)::Real = ifelse(mod(t, 1) < 0.5, 1, -1)
 
-triangle_wave(t::Real)::Real = abs((t % 1) - 0.5) 
+    t = 0:0.01:2
 
-sawtooth_wave(t::Real)::Real = 2 * (t % 1) - 1
-
-t = 0:0.01:2
-
-scatter(t,triangle_wave.(t))
+    scatter(t,sawtooth_wave.(t))
