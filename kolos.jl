@@ -797,3 +797,30 @@ function rozwiazanie42(;
     return sum(abs.(y))/f_len
 end
 #0.002486328200146685 dobrze
+
+function rozwiazanie42(;
+    zz::Vector{ComplexF64} = ComplexF64[0.5653138377631579 + 0.8248759087483948im, 0.5653138377631579 - 0.8248759087483948im, 0.9090424796534677 + 0.41670345593176317im, 0.9090424796534677 - 0.41670345593176317im],
+    pp::Vector{ComplexF64} = ComplexF64[-0.27610745027671657 + 0.6519220973669482im, -0.27610745027671657 - 0.6519220973669482im, -0.1706544392027319 + 0.2080237764058478im, -0.1706544392027319 - 0.2080237764058478im],
+    k::Float64 = 0.05804559733761661,
+    F::Vector{Float64} = [0.01, 0.44, 0.46],
+)
+    z_len = length(zz)
+    p_len = length(pp)
+    f_len = length(F)
+    mian = ones(ComplexF64, f_len)
+    licz = ones(ComplexF64,f_len)
+    y = ones(ComplexF64,f_len)
+
+    for i in 1:f_len
+        z = exp(im * 2 * π * F[i])
+        for j in 1:z_len
+            licz[i] *= (1 - zz[j] * z ^(-1))
+        end
+        for j in 1:p_len
+            mian[i] *= (1 - pp[j] * z ^(-1))
+        end
+        y[i] = k * licz[i]/mian[i]
+    end
+    return sum(abs.(y))/f_len
+end
+

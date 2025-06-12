@@ -5,6 +5,7 @@ using LinearAlgebra
 using OffsetArrays
 using FFTW
 using SpecialFunctions
+using DSP
 
 
 const author = Dict(
@@ -541,7 +542,20 @@ Outputs:
     * loss_values - a vector with reconsturction loss values (optional, recommended for dev)
 """
 function phase_retrieval(X, w, L, N)
-    ##
+    hop = length(w) - L
+    n_fft = size(X, 1)
+    random_phase = 2π * rand(size(X)) .- π
+    Y = X .* exp.(1im .* random_phase)
+    loss_values = zeros(Float64, N)
+
+    for i in 1:N
+        x_hat = istft(Y, w, hop)
+        Y_new = stft(x_hat, w, hop)
+        Y = X .* exp.(1im .* angle.(Y_new))
+        loss_values[i] = norm(abs.(Y_new) .- X) / norm(X)
+    end
+
+    return Y, loss_values
 end
 
 
@@ -696,13 +710,63 @@ end
 firwin_diff(order::Int) = [n == 0 ? 0 : cospi(n) ./ n for n in -order:1:order]
 
 function fir_I_LS(N::Integer, freq::Vector, amp::Vector, w::Vector)::Vector
-    ##
+    M = 2N
+    L = N + 1
+    K = length(freq)
+
+    A = zeros(K, L)
+    for k in 1:K
+        for n in 1:L
+            A[k, n] = cos(2π * freq[k] * (n - 1))
+        end
+    end
+
+    W = Diagonal(w)
+    b = A' * W * amp
+    G = A' * W * A
+    c = G \ b
+
+    h = zeros(M + 1)
+    for n in 1:L
+        h[n] = c[n]
+        h[M + 2 - n] = c[n]
+    end
+
+    return h
 end
 
 function fir_I_remez(M::Integer, A::Function, W::Function)
-    ##
+    N = 2M
+    num_points = 512
+    freqs = range(0, stop=0.5, length=num_points)
+    desired = [A(f) for f in freqs]
+    weights = [W(f) for f in freqs]
+
+    bands = [0.0, 0.5]
+    h = remez(N + 1, bands, desired, weight=weights, Hz=1.0)
+
+    return h
 end
 
 function firwin_lp_kaiser_lp(f0, Δf, δ)
-    ##
+    A = -20 * log10(δ)
+
+    if A <= 21
+        β = 0
+    elseif A <= 50
+        β = 0.5842 * (A - 21)^0.4 + 0.07886 * (A - 21)
+    else
+        β = 0.1102 * (A - 8.7)
+    end
+
+    N = ceil(Int, (A - 8) / (2.285 * 2π * Δf))
+    N += iseven(N) ? 1 : 0
+
+    n = 0:N-1
+    m = n .- (N - 1) / 2
+    h_ideal = 2f0 * sinc.(2f0 .* m)
+    w = kaiser(N, β)
+    h = h_ideal .* w
+
+    return h
 end
